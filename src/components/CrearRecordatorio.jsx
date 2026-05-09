@@ -9,7 +9,7 @@ import {
   FaCalendarAlt
 } from "react-icons/fa";
 import RegistroExitoso from "../components/RegistroExitoso";
-import API_URL from "../services/api";
+import api from "../services/api";
 
 function CrearRecordatorio({ volver, onCreado }) {
 

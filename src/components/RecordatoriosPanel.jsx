@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import API_URL from "../services/api";
+import api from "../services/api";
 import EditarRecordatorioModal from "./EditarRecordatorioModal";
 
 export default function RecordatoriosPanel({ idAdulto, refresh, irACrear }) {

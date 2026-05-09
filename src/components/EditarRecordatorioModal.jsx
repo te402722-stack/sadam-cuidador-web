@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import API_URL from "../services/api";
+import api from "../services/api";
 import { FaTimes, FaSave } from "react-icons/fa";
 
 export default function EditarRecordatorioModal({
