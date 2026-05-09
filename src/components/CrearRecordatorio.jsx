@@ -277,12 +277,14 @@ const guardarRecordatorio = async () => {
     }
 
     const cuidador = JSON.parse(localStorage.getItem("cuidador"));
+
     if (!cuidador) {
       setError("No se encontró el cuidador");
       return;
     }
 
     let frecuenciaFinal = "Diario";
+
     if (intervaloTipo === "semanal") frecuenciaFinal = "Semanal";
     if (intervaloTipo === "cadaXDias") frecuenciaFinal = `Cada ${cadaXDias} días`;
     if (intervaloTipo === "mensual") frecuenciaFinal = "Mensual";
@@ -292,7 +294,10 @@ const guardarRecordatorio = async () => {
       return;
     }
 
-    const listaHoras = horasMultiples.length > 0 ? horasMultiples : [hora];
+    const listaHoras =
+      horasMultiples.length > 0
+        ? horasMultiples
+        : [hora];
 
     if (listaHoras.length === 0) {
       setError("Debes agregar al menos una hora");
@@ -348,22 +353,14 @@ const guardarRecordatorio = async () => {
         dataFinal.especificaciones = form.especificaciones;
       }
 
-      const res = await fetch(`${API_URL}/recordatorios`, {
-  method: "POST",
-  headers: { 
-    "Content-Type": "application/json",
-    "ngrok-skip-browser-warning": "true" // Por si acaso sigues usando ngrok un poco más
-  },
-  body: JSON.stringify(dataFinal)
-});
-
-      if (!res.ok) {
-        throw new Error("Error al guardar recordatorio");
-      }
+      await api.post("/recordatorios", dataFinal);
     }
 
     setGuardado(true);
-    setTimeout(() => setGuardado(false), 2000);
+
+    setTimeout(() => {
+      setGuardado(false);
+    }, 2000);
 
     setHorasMultiples([]);
     setDiasSemana([]);
@@ -371,10 +368,18 @@ const guardarRecordatorio = async () => {
     if (onCreado) onCreado();
 
   } catch (error) {
+
     console.error(error);
-    setError("No se pudo conectar con el servidor");
+
+    setError(
+      error.response?.data?.mensaje ||
+      "No se pudo conectar con el servidor"
+    );
+
   } finally {
+
     setGuardando(false);
+
   }
 };
 

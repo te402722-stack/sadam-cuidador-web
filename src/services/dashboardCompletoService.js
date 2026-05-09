@@ -1,4 +1,4 @@
-import API_URL from "../config/api";
+import api from "./api";
 
 export const obtenerDashboardCompleto = async (idCuidador) => {
   try {
