@@ -98,7 +98,12 @@ const minutos = Array.from({ length: 60 }, (_, i) => i);
 // 🔥 SINCRONIZA DURACIÓN → FECHA TERMINO
 useEffect(() => {
   if (modoDuracion === "dias") {
-    const inicio = new Date(fechaInicio.anio, fechaInicio.mes - 1, fechaInicio.dia);
+    const inicio = new Date(
+  fechaInicio.anio,
+  fechaInicio.mes - 1,
+  fechaInicio.dia,
+  12, 0, 0
+);
     inicio.setDate(inicio.getDate() + duracionDias - 1);
 
     setFechaTermino({
@@ -112,7 +117,12 @@ useEffect(() => {
 // 🔥 SINCRONIZA FECHA TERMINO → DURACIÓN
 useEffect(() => {
   if (modoDuracion === "fecha") {
-    const inicio = new Date(fechaInicio.anio, fechaInicio.mes - 1, fechaInicio.dia);
+const inicio = new Date(
+  fechaInicio.anio,
+  fechaInicio.mes - 1,
+  fechaInicio.dia,
+  12, 0, 0
+);
     const fin = new Date(fechaTermino.anio, fechaTermino.mes - 1, fechaTermino.dia);
 
     const diff = Math.ceil((fin - inicio) / 86400000) + 1;
@@ -186,7 +196,12 @@ const generarRecordatorios = () => {
 
   const recordatorios = [];
 
-  const inicio = new Date(fechaInicio.anio, fechaInicio.mes - 1, fechaInicio.dia);
+const inicio = new Date(
+  fechaInicio.anio,
+  fechaInicio.mes - 1,
+  fechaInicio.dia,
+  12, 0, 0
+);
   const fin = new Date(fechaTermino.anio, fechaTermino.mes - 1, fechaTermino.dia);
   inicio.setHours(0,0,0,0);
   fin.setHours(23,59,59,999);
@@ -268,7 +283,12 @@ const guardarRecordatorio = async () => {
 
   try {
 
-    const inicio = new Date(fechaInicio.anio, fechaInicio.mes - 1, fechaInicio.dia);
+const inicio = new Date(
+  fechaInicio.anio,
+  fechaInicio.mes - 1,
+  fechaInicio.dia,
+  12, 0, 0
+);
     const fin = new Date(fechaTermino.anio, fechaTermino.mes - 1, fechaTermino.dia);
 
     if (fin < inicio) {
@@ -408,7 +428,12 @@ const guardarRecordatorio = async () => {
   };
 
   useEffect(() => {
-  const inicio = new Date(fechaInicio.anio, fechaInicio.mes - 1, fechaInicio.dia);
+const inicio = new Date(
+  fechaInicio.anio,
+  fechaInicio.mes - 1,
+  fechaInicio.dia,
+  12, 0, 0
+);
   const fin = new Date(inicio);
 
   switch (intervaloTipo) {
