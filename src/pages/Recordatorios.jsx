@@ -1,6 +1,7 @@
 import { useState } from "react";
 import CrearRecordatorio from "../components/CrearRecordatorio";
 import RecordatoriosPanel from "../components/RecordatoriosPanel";
+import api from "../services/api";
 
 export default function RecordatoriosPage({ idCuidador }) {
 

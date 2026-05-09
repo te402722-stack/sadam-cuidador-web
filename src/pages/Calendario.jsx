@@ -8,6 +8,7 @@ import {
   FaHeartbeat,
   FaWalking
 } from "react-icons/fa";
+import api from "../services/api";
 
 function CalendarioCuidador() {
 

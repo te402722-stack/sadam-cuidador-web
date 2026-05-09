@@ -7,6 +7,7 @@ import {
   FaExclamationTriangle
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 function Dashboard() {
 

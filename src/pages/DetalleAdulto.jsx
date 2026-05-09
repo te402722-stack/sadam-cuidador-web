@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { FaUserAlt, FaNotesMedical } from "react-icons/fa";
+import api from "../services/api";
 
 function DetalleAdulto() {
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { FaUser, FaEnvelope, FaPhone, FaLock, FaUsers } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 function RegistroCuidador() {
 
