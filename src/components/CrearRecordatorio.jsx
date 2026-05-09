@@ -123,8 +123,12 @@ const inicio = new Date(
   fechaInicio.dia,
   12, 0, 0
 );
-    const fin = new Date(fechaTermino.anio, fechaTermino.mes - 1, fechaTermino.dia);
-
+const fin = new Date(
+  fechaTermino.anio,
+  fechaTermino.mes - 1,
+  fechaTermino.dia,
+  12, 0, 0
+);
     const diff = Math.ceil((fin - inicio) / 86400000) + 1;
 
     if (diff > 0) setDuracionDias(diff);
@@ -202,7 +206,12 @@ const inicio = new Date(
   fechaInicio.dia,
   12, 0, 0
 );
-  const fin = new Date(fechaTermino.anio, fechaTermino.mes - 1, fechaTermino.dia);
+const fin = new Date(
+  fechaTermino.anio,
+  fechaTermino.mes - 1,
+  fechaTermino.dia,
+  12, 0, 0
+);
   inicio.setHours(0,0,0,0);
   fin.setHours(23,59,59,999);
 
@@ -289,8 +298,12 @@ const inicio = new Date(
   fechaInicio.dia,
   12, 0, 0
 );
-    const fin = new Date(fechaTermino.anio, fechaTermino.mes - 1, fechaTermino.dia);
-
+const fin = new Date(
+  fechaTermino.anio,
+  fechaTermino.mes - 1,
+  fechaTermino.dia,
+  12, 0, 0
+);
     if (fin < inicio) {
       setError("La fecha final no puede ser menor a la inicial");
       return;
