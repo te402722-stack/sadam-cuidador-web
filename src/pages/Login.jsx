@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import logo from "../assets/logo.png";
-import api from "../config/api";
+import api from "../services/api";
 
 function Login({ onLogin }) {
 
