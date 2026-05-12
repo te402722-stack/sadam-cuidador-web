@@ -4,393 +4,246 @@ import {
   FaCalendarAlt,
   FaHeartbeat,
   FaSmile,
-  FaExclamationTriangle
+  FaExclamationTriangle,
+  FaCheckCircle,
+  FaUserCircle,
+  FaClock
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
 function Dashboard() {
-
   const [adulto, setAdulto] = useState(null);
   const [cuidador, setCuidador] = useState(null);
-
   const [recordatoriosHoy, setRecordatoriosHoy] = useState([]);
   const [sintomas, setSintomas] = useState([]);
   const [actividades, setActividades] = useState([]);
   const [estadoAnimo, setEstadoAnimo] = useState("Sin registro");
-
   const [mostrarRecordatorios, setMostrarRecordatorios] = useState(false);
 
   const navigate = useNavigate();
 
-  /* =========================
-     FUNCION CARGAR DATOS
-  ========================= */
-
   const cargarDatos = async () => {
-  try {
-    const adultoLS = JSON.parse(localStorage.getItem("adultoSeleccionado")) || JSON.parse(localStorage.getItem("adulto"));
-    const cuidadorLS = JSON.parse(localStorage.getItem("cuidador"));
+    try {
+      const adultoLS = JSON.parse(localStorage.getItem("adultoSeleccionado")) || JSON.parse(localStorage.getItem("adulto"));
+      const cuidadorLS = JSON.parse(localStorage.getItem("cuidador"));
 
-    setAdulto(adultoLS);
-    if (adultoLS) localStorage.setItem("adulto", JSON.stringify(adultoLS));
-    setCuidador(cuidadorLS);
+      setAdulto(adultoLS);
+      setCuidador(cuidadorLS);
 
-    if (!adultoLS) return;
+      if (!adultoLS) return;
 
-    if (adultoLS.id_adulto) {
-      localStorage.setItem("id_adulto", adultoLS.id_adulto);
+      const res = await api.get(`/dashboard-datos/${adultoLS.id_adulto}`);
+      const data = res.data;
+
+      if (data.recordatorios) setRecordatoriosHoy(data.recordatorios);
+      if (data.sintomas) setSintomas(data.sintomas.map(s => s.sintoma));
+      if (data.actividades) setActividades(data.actividades);
+      if (data.estado_animo) setEstadoAnimo(data.estado_animo);
+    } catch (error) {
+      console.error("Error cargando datos:", error);
     }
-
-    // Cambio de fetch a api.get
-    const res = await api.get(`/dashboard-datos/${adultoLS.id_adulto}`);
-    const data = res.data;
-
-    if (data.recordatorios) setRecordatoriosHoy(data.recordatorios);
-    if (data.sintomas) setSintomas(data.sintomas.map(s => s.sintoma));
-    if (data.actividades) setActividades(data.actividades);
-    if (data.estado_animo) setEstadoAnimo(data.estado_animo);
-
-  } catch (error) {
-    console.error("Error cargando datos:", error);
-  }
-};
-
-  /* =========================
-     CARGA INICIAL + REFRESH
-  ========================= */
+  };
 
   useEffect(() => {
-
     cargarDatos();
-
-    const intervalo = setInterval(() => {
-      cargarDatos();
-    }, 30000);
-
+    const intervalo = setInterval(cargarDatos, 30000);
     return () => clearInterval(intervalo);
-
   }, []);
 
-  /* =========================
-     PROGRESO ACTIVIDADES
-  ========================= */
-
   const totalActividades = actividades.length;
-
   const completadas = actividades.filter(a => a.realizada).length;
-
-  const progreso =
-    totalActividades > 0
-      ? Math.round((completadas / totalActividades) * 100)
-      : 0;
-
-  /* =========================
-     ALERTAS
-  ========================= */
-
-  const recordatoriosPendientes =
-    recordatoriosHoy.filter(r => r.estado !== "Completado");
-
-  const hayAlerta = recordatoriosPendientes.length > 0;
+  const progreso = totalActividades > 0 ? Math.round((completadas / totalActividades) * 100) : 0;
+  const recordatoriosPendientes = recordatoriosHoy.filter(r => r.estado !== "Completado");
 
   if (!adulto) {
-  return (
-    <div className="p-6 text-center">
-      <p className="text-gray-500 mb-4">
-        No hay un adulto seleccionado
-      </p>
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-6 text-center">
+        <div className="bg-white p-8 rounded-3xl shadow-xl max-w-sm">
+          <FaUserCircle className="text-6xl text-slate-300 mx-auto mb-4" />
+          <p className="text-slate-600 font-medium mb-6">No hay un adulto seleccionado para monitorear.</p>
+          <button
+            onClick={() => navigate("/dashboard/adultos")}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-2xl transition-all shadow-lg shadow-indigo-200"
+          >
+            Seleccionar Adulto
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-      <button
-        onClick={() => navigate("/dashboard/adultos")}
-        className="bg-blue-500 text-white px-4 py-2 rounded-lg"
-      >
-        Seleccionar adulto
-      </button>
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] pb-20">
+      {/* TOP BAR / HEADER */}
+      <div className="bg-white px-6 py-8 rounded-b-[3rem] shadow-sm mb-8 border-b border-slate-100">
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-slate-400 text-sm font-medium uppercase tracking-wider">Panel de Control</h1>
+            <h2 className="text-2xl font-black text-slate-800 mt-1">
+              Hola, <span className="text-indigo-600">{cuidador?.nombre || "Cuidador"}</span> 👋
+            </h2>
+          </div>
+          <div className="bg-indigo-50 p-3 rounded-2xl">
+             <FaBell className="text-indigo-500 text-xl" />
+          </div>
+        </div>
+
+        {/* TARJETA ADULTO (Destacada) */}
+        <div className="mt-8 bg-indigo-600 rounded-[2rem] p-6 text-white shadow-xl shadow-indigo-200 relative overflow-hidden">
+          <div className="relative z-10">
+            <p className="opacity-80 text-sm font-light">Monitoreando a:</p>
+            <h3 className="text-2xl font-bold">{adulto.nombre}</h3>
+            <div className="mt-4 flex gap-2">
+              <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs">ID: {adulto.id_adulto}</span>
+              <span className="bg-green-400/20 backdrop-blur-md px-3 py-1 rounded-full text-xs flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div> En línea
+              </span>
+            </div>
+          </div>
+          {/* Círculos decorativos de fondo */}
+          <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full"></div>
+        </div>
+      </div>
+
+      <div className="px-6 max-w-2xl mx-auto">
+        
+        {/* ALERTAS */}
+        {recordatoriosPendientes.length > 0 && (
+          <div className="bg-rose-50 border border-rose-100 rounded-3xl p-4 mb-8 flex items-center gap-4 animate-bounce-subtle">
+            <div className="bg-rose-500 p-3 rounded-2xl shadow-lg shadow-rose-200">
+              <FaExclamationTriangle className="text-white" />
+            </div>
+            <div>
+              <p className="text-rose-900 font-bold text-sm">Recordatorios Pendientes</p>
+              <p className="text-rose-700 text-xs font-medium">Tienes {recordatoriosPendientes.length} tareas sin completar.</p>
+            </div>
+          </div>
+        )}
+
+        {/* PROGRESO DE ACTIVIDADES */}
+        <section className="mb-8">
+          <div className="flex justify-between items-end mb-3">
+            <h3 className="font-bold text-slate-800 px-1">Actividades de Hoy</h3>
+            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">{progreso}%</span>
+          </div>
+          <div className="bg-white p-5 rounded-[2rem] shadow-sm border border-slate-50">
+            <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+              <div 
+                className="bg-indigo-500 h-full rounded-full transition-all duration-1000 ease-out" 
+                style={{ width: `${progreso}%` }}
+              />
+            </div>
+            <p className="text-slate-500 text-xs mt-3 flex items-center gap-2 font-medium">
+              <FaCheckCircle className="text-green-500" /> {completadas} de {totalActividades} completadas
+            </p>
+          </div>
+        </section>
+
+        {/* GRID DE ACCIONES RÁPIDAS */}
+        <div className="grid grid-cols-2 gap-4 mb-8">
+          <QuickCard 
+            icon={<FaBell className="text-indigo-500" />} 
+            label="Pendientes" 
+            value={`${recordatoriosHoy.length} hoy`}
+            onClick={() => setMostrarRecordatorios(!mostrarRecordatorios)}
+            active={mostrarRecordatorios}
+          />
+          <QuickCard 
+            icon={<FaCalendarAlt className="text-emerald-500" />} 
+            label="Calendario" 
+            value="Ver agenda"
+            onClick={() => navigate("/dashboard/calendario")}
+          />
+          <QuickCard 
+            icon={<FaSmile className="text-amber-400" />} 
+            label="Ánimo" 
+            value={estadoAnimo} 
+          />
+          <QuickCard 
+            icon={<FaHeartbeat className="text-rose-400" />} 
+            label="Síntomas" 
+            value={sintomas.length > 0 ? sintomas[0] : "Todo bien"} 
+          />
+        </div>
+
+        {/* TABLA DE RECORDATORIOS (LISTA MODERNA) */}
+        {mostrarRecordatorios && (
+          <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-50 mb-8 overflow-hidden animate-fade-in">
+            <h3 className="font-bold text-slate-800 mb-4">Detalle de Recordatorios</h3>
+            <div className="space-y-3">
+              {recordatoriosHoy.length === 0 ? (
+                <p className="text-slate-400 text-sm text-center py-4">No hay tareas programadas.</p>
+              ) : (
+                recordatoriosHoy.map((r, i) => (
+                  <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-10 bg-indigo-500 rounded-full"></div>
+                      <div>
+                        <p className="font-bold text-slate-700 text-sm">{r.titulo}</p>
+                        <p className="text-slate-400 text-[10px] uppercase flex items-center gap-1">
+                          <FaClock /> {r.hora}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                      r.estado === "Completado" ? "bg-green-100 text-green-600" : "bg-amber-100 text-amber-600"
+                    }`}>
+                      {r.estado}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* REGISTRO DE ACTIVIDADES (LISTA MODERNA) */}
+        <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-50 mb-8">
+            <h3 className="font-bold text-slate-800 mb-4">Registro de Actividades</h3>
+            <div className="space-y-4">
+              {actividades.length === 0 ? (
+                <p className="text-slate-400 text-sm text-center py-4">Sin actividades recientes.</p>
+              ) : (
+                actividades.map((a, i) => (
+                  <div key={i} className="flex items-center justify-between border-b border-slate-50 pb-3 last:border-0 last:pb-0">
+                    <div>
+                      <p className="font-medium text-slate-700 text-sm">{a.nombre}</p>
+                      <p className="text-slate-400 text-xs tracking-tight">{a.hora || "--:--"}</p>
+                    </div>
+                    <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-md ${
+                      a.realizada ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-400"
+                    }`}>
+                      {a.realizada ? "Listo" : "Pendiente"}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+        </div>
+      </div>
     </div>
   );
 }
 
+/* Componente pequeño para las tarjetas del grid */
+function QuickCard({ icon, label, value, onClick, active }) {
   return (
-
-    <div className="min-h-screen bg-gradient-to-b from-[#eef5ff] to-[#f4f9f4] p-6">
-
-      {/* HEADER */}
-      <div className="mb-6">
-
-        <h1 className="text-2xl font-bold text-gray-800">
-          Hola {cuidador?.nombre || "Cuidador"} 👋
-        </h1>
-
-        <p className="text-gray-500">
-          Bienvenido a tu panel de cuidado
-        </p>
-
+    <div 
+      onClick={onClick}
+      className={`p-5 rounded-[2rem] transition-all cursor-pointer border ${
+        active 
+        ? "bg-indigo-600 border-indigo-600 shadow-lg shadow-indigo-100" 
+        : "bg-white border-slate-50 shadow-sm hover:shadow-md hover:-translate-y-1"
+      }`}
+    >
+      <div className={`${active ? "bg-white/20" : "bg-slate-50"} w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-colors`}>
+        {icon}
       </div>
-
-      {/* ALERTA */}
-      {hayAlerta && (
-
-        <div className="bg-red-100 border border-red-300 text-red-700 rounded-2xl p-4 mb-6 flex items-center gap-3">
-
-          <FaExclamationTriangle className="text-red-500 text-xl"/>
-
-          <div>
-
-            <p className="font-semibold">
-              Atención
-            </p>
-
-            <p className="text-sm">
-              Hay {recordatoriosPendientes.length} recordatorio(s) pendientes
-            </p>
-
-          </div>
-
-        </div>
-
-      )}
-
-      {/* ADULTO */}
-      <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-
-        <p className="text-gray-500 text-sm">
-          Gracias por estar pendiente de
-        </p>
-
-        <h2 className="text-2xl font-bold text-indigo-600 mt-1">
-          {adulto.nombre}
-        </h2>
-
-      </div>
-
-      {/* PROGRESO */}
-      <div className="bg-white rounded-3xl shadow-md p-6 mb-6">
-
-        <h3 className="font-semibold text-gray-700 mb-3">
-          Actividades realizadas hoy
-        </h3>
-
-        <div className="w-full bg-gray-200 rounded-full h-4">
-
-          <div
-            className="bg-green-500 h-4 rounded-full"
-            style={{ width: `${progreso}%` }}
-          />
-
-        </div>
-
-        <p className="text-sm text-gray-500 mt-2">
-          {completadas} de {totalActividades} actividades realizadas
-        </p>
-
-      </div>
-
-      {/* GRID */}
-      <div className="grid grid-cols-2 gap-4">
-
-        {/* RECORDATORIOS */}
-        <div
-          onClick={() => setMostrarRecordatorios(!mostrarRecordatorios)}
-          className="bg-white rounded-2xl shadow-md p-5 cursor-pointer hover:shadow-lg transition"
-        >
-
-          <FaBell className="text-indigo-500 text-2xl mb-3"/>
-
-          <p className="font-semibold text-gray-700">
-            Recordatorios de hoy
-          </p>
-
-          <p className="text-xs text-gray-400">
-            {recordatoriosHoy.length} recordatorios
-          </p>
-
-        </div>
-
-        {/* CALENDARIO */}
-        <div
-          onClick={() => navigate("/dashboard/calendario")}
-          className="bg-white rounded-2xl shadow-md p-5 cursor-pointer hover:shadow-lg transition"
-        >
-
-          <FaCalendarAlt className="text-indigo-500 text-2xl mb-3"/>
-
-          <p className="font-semibold text-gray-700">
-            Calendario
-          </p>
-
-          <p className="text-xs text-gray-400">
-            Ver todos los recordatorios
-          </p>
-
-        </div>
-
-        {/* ESTADO ANIMO */}
-        <div className="bg-white rounded-2xl shadow-md p-5">
-
-          <FaSmile className="text-yellow-400 text-2xl mb-3"/>
-
-          <p className="font-semibold text-gray-700">
-            Estado de ánimo
-          </p>
-
-          <p className="text-sm text-gray-500 mt-1">
-            {estadoAnimo}
-          </p>
-
-        </div>
-
-        {/* SINTOMAS */}
-        <div className="bg-white rounded-2xl shadow-md p-5">
-
-          <FaHeartbeat className="text-red-400 text-2xl mb-3"/>
-
-          <p className="font-semibold text-gray-700">
-            Síntomas
-          </p>
-
-          {sintomas.length === 0 && (
-            <p className="text-xs text-gray-400">
-              Sin síntomas registrados
-            </p>
-          )}
-
-          {sintomas.map((s,i)=>(
-            <p key={i} className="text-xs text-gray-500">
-              • {s}
-            </p>
-          ))}
-
-        </div>
-
-      </div>
-
-      {/* DETALLE RECORDATORIOS */}
-{mostrarRecordatorios && (
-  <div className="bg-white rounded-3xl shadow-md p-6 mt-6">
-    <h3 className="font-semibold text-gray-700 mb-4">
-      Recordatorios de hoy
-    </h3>
-
-    {recordatoriosHoy.length === 0 && (
-      <p className="text-gray-400 text-sm">
-        No hay recordatorios hoy
-      </p>
-    )}
-
-    {recordatoriosHoy.length > 0 && (
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-gray-500 text-left">
-            <th>Recordatorio</th>
-            <th>Hora</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
-
-        <tbody>
-
-          {recordatoriosHoy.map((r, i) => {
-            const estado = r.estado;
-
-            // Colores según estado
-            let colorEstado = "text-gray-400";
-            if (estado === "Completado") colorEstado = "text-green-500";
-            if (estado === "Retrasado") colorEstado = "text-red-500";
-            if (estado === "Pendiente") colorEstado = "text-yellow-500";
-
-            return (
-              <tr key={i} className="border-t">
-                <td className="py-2">{r.titulo}</td>
-                <td className="py-2">{r.hora}</td>
-                <td className={`py-2 font-semibold ${colorEstado}`}>
-                  {estado}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    )}
-  </div>
-)}
-
-      {/* ACTIVIDADES */}
-      <div className="bg-white rounded-3xl shadow-md p-6 mt-6">
-
-        <h3 className="font-semibold text-gray-700 mb-4">
-          Registro de actividades
-        </h3>
-
-        {actividades.length === 0 && (
-          <p className="text-gray-400 text-sm">
-            No hay actividades registradas
-          </p>
-        )}
-
-        {actividades.length > 0 && (
-
-          <table className="w-full text-sm">
-
-            <thead>
-              <tr className="text-gray-500 text-left">
-                <th>Actividad</th>
-                <th>Estado</th>
-                <th>Hora</th>
-              </tr>
-            </thead>
-
-            <tbody>
-
-              {actividades.map((a,i)=>(
-
-                <tr key={i} className="border-t">
-
-                  <td className="py-2">{a.nombre}</td>
-
-                  <td className={`py-2 font-semibold
-                    ${a.realizada ? "text-green-500" : "text-gray-400"}
-                  `}>
-                    {a.realizada ? "Realizada" : "No registrada"}
-                  </td>
-
-                  <td className="py-2">
-                    {a.hora || "-"}
-                  </td>
-
-                </tr>
-
-              ))}
-
-            </tbody>
-
-          </table>
-
-        )}
-
-      </div>
-
-      {/* INFO ADULTO */}
-      <div className="bg-white rounded-3xl shadow-md p-6 mt-6">
-
-        <h3 className="font-semibold text-gray-700 mb-3">
-          Información del adulto
-        </h3>
-
-        <p className="text-sm text-gray-600">
-          <strong>Nombre:</strong> {adulto.nombre}
-        </p>
-
-        <p className="text-sm text-gray-600">
-          <strong>ID:</strong> {adulto.id_adulto}
-        </p>
-
-      </div>
-
+      <p className={`text-xs font-bold uppercase tracking-tight ${active ? "text-indigo-100" : "text-slate-400"}`}>{label}</p>
+      <p className={`text-sm font-black mt-1 ${active ? "text-white" : "text-slate-700"}`}>{value}</p>
     </div>
-
   );
-
 }
 
 export default Dashboard;

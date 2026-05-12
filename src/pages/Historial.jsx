@@ -47,7 +47,7 @@ function Historial() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
-              Historial de Salud
+              Historial
             </h1>
             <p className="text-slate-500 mt-1">
               Registro detallado de actividades y síntomas
