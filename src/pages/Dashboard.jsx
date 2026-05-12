@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import {
-  FaBell, FaCalendarAlt, FaHeartbeat, FaSmile,
-  FaExclamationTriangle, FaCheckCircle, FaUserCircle,
-  FaClock, FaChevronRight, FaInfoCircle
+  FaBell,
+  FaCalendarAlt,
+  FaHeartbeat,
+  FaSmile,
+  FaExclamationTriangle,
+  FaUserCircle,
+  FaCheckCircle
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
@@ -14,23 +18,29 @@ function Dashboard() {
   const [sintomas, setSintomas] = useState([]);
   const [actividades, setActividades] = useState([]);
   const [estadoAnimo, setEstadoAnimo] = useState("Sin registro");
-  
+  const [mostrarRecordatorios, setMostrarRecordatorios] = useState(false);
+
   const navigate = useNavigate();
 
   const cargarDatos = async () => {
     try {
       const adultoLS = JSON.parse(localStorage.getItem("adultoSeleccionado")) || JSON.parse(localStorage.getItem("adulto"));
       const cuidadorLS = JSON.parse(localStorage.getItem("cuidador"));
+
       setAdulto(adultoLS);
+      if (adultoLS) localStorage.setItem("adulto", JSON.stringify(adultoLS));
       setCuidador(cuidadorLS);
 
       if (!adultoLS) return;
+      if (adultoLS.id_adulto) localStorage.setItem("id_adulto", adultoLS.id_adulto);
+
       const res = await api.get(`/dashboard-datos/${adultoLS.id_adulto}`);
       const data = res.data;
-      setRecordatoriosHoy(data.recordatorios || []);
-      setSintomas(data.sintomas?.map(s => s.sintoma) || []);
-      setActividades(data.actividades || []);
-      setEstadoAnimo(data.estado_animo || "Sin registro");
+
+      if (data.recordatorios) setRecordatoriosHoy(data.recordatorios);
+      if (data.sintomas) setSintomas(data.sintomas.map(s => s.sintoma));
+      if (data.actividades) setActividades(data.actividades);
+      if (data.estado_animo) setEstadoAnimo(data.estado_animo);
     } catch (error) {
       console.error("Error cargando datos:", error);
     }
@@ -45,17 +55,20 @@ function Dashboard() {
   const totalActividades = actividades.length;
   const completadas = actividades.filter(a => a.realizada).length;
   const progreso = totalActividades > 0 ? Math.round((completadas / totalActividades) * 100) : 0;
-  const pendientes = recordatoriosHoy.filter(r => r.estado !== "Completado");
+  const recordatoriosPendientes = recordatoriosHoy.filter(r => r.estado !== "Completado");
+  const hayAlerta = recordatoriosPendientes.length > 0;
 
   if (!adulto) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50">
-        <div className="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-lg">
-          <FaUserCircle className="text-8xl text-slate-200 mx-auto mb-6" />
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">No hay paciente seleccionado</h2>
-          <p className="text-slate-500 mb-8">Para comenzar a gestionar los cuidados, primero debes elegir a un adulto mayor de tu lista.</p>
-          <button onClick={() => navigate("/dashboard/adultos")} className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-bold transition-all transform hover:scale-105 shadow-lg">
-            Ir a Selección de Adultos
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+        <div className="bg-white p-8 rounded-3xl shadow-xl text-center max-w-sm border border-slate-100">
+          <FaUserCircle className="text-6xl text-slate-200 mx-auto mb-4" />
+          <p className="text-slate-600 font-medium mb-6">No hay un adulto seleccionado</p>
+          <button
+            onClick={() => navigate("/dashboard/adultos")}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold transition-all"
+          >
+            Seleccionar adulto
           </button>
         </div>
       </div>
@@ -63,195 +76,178 @@ function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F1F5F9] flex">
-      {/* --- MAIN CONTENT AREA --- */}
-      <main className="flex-1 p-8 overflow-y-auto">
+    <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-8">
+      <div className="max-w-6xl mx-auto">
         
-        {/* HEADER WEB */}
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        {/* HEADER */}
+        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-black text-slate-800 tracking-tight">
-              Bienvenido, <span className="text-indigo-600">{cuidador?.nombre}</span>
+            <h1 className="text-3xl font-black text-slate-800">
+              Hola, <span className="text-indigo-600">{cuidador?.nombre || "Cuidador"}</span> 👋
             </h1>
-            <p className="text-slate-500 font-medium">Panel de control de salud y cuidados</p>
+            <p className="text-slate-500 font-medium">Bienvenido a tu panel de cuidado profesional</p>
           </div>
-          <div className="flex gap-3">
-            <button onClick={() => navigate("/dashboard/calendario")} className="flex items-center gap-2 bg-white px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all shadow-sm">
-              <FaCalendarAlt /> Agenda Completa
-            </button>
-            <div className="bg-white p-3 rounded-xl border border-slate-200 text-indigo-600 shadow-sm relative">
-              <FaBell />
-              {pendientes.length > 0 && <span className="absolute -top-1 -right-1 bg-rose-500 w-4 h-4 rounded-full border-2 border-white"></span>}
+          <button 
+            onClick={() => navigate("/dashboard/calendario")}
+            className="bg-white text-slate-600 px-5 py-2.5 rounded-2xl shadow-sm border border-slate-200 font-bold flex items-center gap-2 hover:bg-slate-50 transition-all"
+          >
+            <FaCalendarAlt className="text-indigo-500" /> Calendario General
+          </button>
+        </div>
+
+        {/* ALERTA */}
+        {hayAlerta && (
+          <div className="bg-rose-50 border border-rose-100 text-rose-700 rounded-[2rem] p-5 mb-8 flex items-center gap-4 animate-pulse-subtle shadow-sm">
+            <div className="bg-rose-500 p-3 rounded-2xl text-white shadow-lg shadow-rose-200">
+              <FaExclamationTriangle size={20} />
+            </div>
+            <div>
+              <p className="font-black text-lg">Atención</p>
+              <p className="text-sm font-medium opacity-80 italic">
+                Hay {recordatoriosPendientes.length} recordatorio(s) pendientes por atender.
+              </p>
             </div>
           </div>
-        </header>
+        )}
 
-        {/* TOP ROW: ALERTA & RESUMEN PACIENTE */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Card Paciente */}
-          <div className="lg:col-span-2 bg-gradient-to-r from-indigo-600 to-violet-700 rounded-[2.5rem] p-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-center relative overflow-hidden">
-            <div className="relative z-10 text-center md:text-left">
-              <span className="bg-white/20 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-widest">Paciente Actual</span>
-              <h2 className="text-4xl font-black mt-2">{adulto.nombre}</h2>
-              <div className="flex gap-4 mt-4 justify-center md:justify-start">
-                <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-xl backdrop-blur-md">
-                  <FaInfoCircle /> <span className="text-sm font-medium">ID: {adulto.id_adulto}</span>
-                </div>
-                <div className="flex items-center gap-2 bg-emerald-400/20 px-4 py-2 rounded-xl backdrop-blur-md border border-emerald-400/30">
-                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-bold text-emerald-100">Estado: Estable</span>
-                </div>
+        {/* SECCIÓN PRINCIPAL: ADULTO & PROGRESO (Lado a lado en PC) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-[2.5rem] shadow-xl p-8 text-white relative overflow-hidden group">
+            <div className="relative z-10">
+              <p className="text-indigo-100 text-sm font-bold uppercase tracking-widest mb-1">Paciente</p>
+              <h2 className="text-4xl font-black">{adulto.nombre}</h2>
+              <div className="mt-4 flex items-center gap-2 text-xs font-bold bg-white/20 w-fit px-3 py-1 rounded-full backdrop-blur-md">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" /> MONITOREO ACTIVO
               </div>
             </div>
-            <div className="relative z-10 mt-6 md:mt-0">
-              <div className="bg-white/10 p-6 rounded-[2rem] backdrop-blur-xl border border-white/20 text-center">
-                <p className="text-xs font-bold uppercase opacity-70 mb-1">Progreso Diario</p>
-                <div className="text-3xl font-black">{progreso}%</div>
-                <div className="w-32 bg-white/20 h-2 rounded-full mt-2 overflow-hidden">
-                  <div className="bg-white h-full" style={{ width: `${progreso}%` }}></div>
-                </div>
-              </div>
-            </div>
-            {/* Círculo decorativo */}
-            <div className="absolute -right-16 -top-16 w-64 h-64 bg-white/5 rounded-full"></div>
+            <FaUserCircle className="absolute -right-4 -bottom-4 text-white/10 text-9xl group-hover:scale-110 transition-transform" />
           </div>
 
-          {/* Card Alerta Rapida */}
-          <div className={`${pendientes.length > 0 ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-100'} border rounded-[2.5rem] p-8 flex flex-col justify-center items-center text-center shadow-sm`}>
-            {pendientes.length > 0 ? (
-              <>
-                <div className="bg-rose-500 p-4 rounded-2xl shadow-lg shadow-rose-200 mb-4 animate-bounce-subtle text-white">
-                  <FaExclamationTriangle size={24} />
-                </div>
-                <h3 className="text-rose-900 font-bold text-lg">Tareas Pendientes</h3>
-                <p className="text-rose-600 text-sm mt-1">Hay {pendientes.length} recordatorios esperando acción inmediata.</p>
-              </>
-            ) : (
-              <>
-                <div className="bg-emerald-100 p-4 rounded-2xl mb-4 text-emerald-600">
-                  <FaCheckCircle size={24} />
-                </div>
-                <h3 className="text-slate-800 font-bold text-lg">Todo al día</h3>
-                <p className="text-slate-500 text-sm mt-1">No hay alertas críticas en este momento.</p>
-              </>
-            )}
+          <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8 flex flex-col justify-center">
+            <div className="flex justify-between items-end mb-4">
+              <h3 className="font-black text-slate-700 uppercase text-xs tracking-wider">Actividades de hoy</h3>
+              <span className="text-indigo-600 font-black text-xl">{progreso}%</span>
+            </div>
+            <div className="w-full bg-slate-100 rounded-full h-4 mb-4 overflow-hidden">
+              <div
+                className="bg-indigo-500 h-full rounded-full transition-all duration-1000 shadow-inner"
+                style={{ width: `${progreso}%` }}
+              />
+            </div>
+            <p className="text-sm font-bold text-slate-400 flex items-center gap-2">
+              <FaCheckCircle className="text-emerald-500" /> {completadas} de {totalActividades} completadas
+            </p>
           </div>
         </div>
 
-        {/* MAIN GRID */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-          
-          {/* COLUMNA IZQUIERDA: STATUS RAPIDO (1/4) */}
-          <div className="xl:col-span-1 space-y-6">
-            <StatusCard icon={<FaSmile className="text-amber-400" />} title="Ánimo" value={estadoAnimo} color="bg-amber-50" />
-            <StatusCard icon={<FaHeartbeat className="text-rose-500" />} title="Último Síntoma" value={sintomas.length > 0 ? sintomas[0] : "Sin reportes"} color="bg-rose-50" />
-            
-            <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
-              <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <FaClock className="text-indigo-500" /> Historial Reciente
-              </h3>
-              <div className="space-y-4">
-                {sintomas.slice(0, 3).map((s, i) => (
-                  <div key={i} className="flex gap-3 items-start">
-                    <div className="w-1.5 h-1.5 bg-slate-300 rounded-full mt-1.5"></div>
-                    <p className="text-sm text-slate-600">{s}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+        {/* GRID DE BOTONES / INFO RÁPIDA */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+          <button
+            onClick={() => setMostrarRecordatorios(!mostrarRecordatorios)}
+            className={`p-6 rounded-[2rem] transition-all text-left border ${
+              mostrarRecordatorios ? "bg-indigo-600 text-white shadow-indigo-200 shadow-xl" : "bg-white text-slate-700 border-slate-100 shadow-sm hover:shadow-md"
+            }`}
+          >
+            <FaBell className={`text-2xl mb-4 ${mostrarRecordatorios ? "text-white" : "text-indigo-500"}`} />
+            <p className="font-black text-sm uppercase tracking-tight">Recordatorios</p>
+            <p className={`text-[10px] font-bold ${mostrarRecordatorios ? "text-indigo-100" : "text-slate-400"}`}>
+              {recordatoriosHoy.length} PROGRAMADOS
+            </p>
+          </button>
+
+          <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+            <FaSmile className="text-amber-400 text-2xl mb-4" />
+            <p className="font-black text-sm uppercase tracking-tight text-slate-700">Ánimo</p>
+            <p className="font-bold text-slate-500 text-sm mt-1">{estadoAnimo}</p>
           </div>
 
-          {/* COLUMNA CENTRAL: TABLAS DE GESTION (3/4) */}
-          <div className="xl:col-span-3 space-y-6">
-            
-            {/* Recordatorios Section */}
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-slate-800">Planificación de Hoy</h3>
-                <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-4 py-1.5 rounded-full">
-                  {recordatoriosHoy.length} Eventos
-                </span>
-              </div>
-              
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="text-slate-400 text-xs uppercase tracking-widest border-b border-slate-50">
-                      <th className="pb-4 font-bold">Actividad / Medicamento</th>
-                      <th className="pb-4 font-bold text-center">Hora</th>
-                      <th className="pb-4 font-bold text-center">Estado</th>
-                      <th className="pb-4 font-bold text-right">Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {recordatoriosHoy.length === 0 ? (
-                      <tr><td colSpan="4" className="py-10 text-center text-slate-400 italic">No hay recordatorios registrados para hoy</td></tr>
-                    ) : (
-                      recordatoriosHoy.map((r, i) => (
-                        <tr key={i} className="group hover:bg-slate-50/50 transition-colors">
-                          <td className="py-4 font-bold text-slate-700">{r.titulo}</td>
-                          <td className="py-4 text-center text-slate-500 font-medium">
-                            <span className="bg-slate-100 px-3 py-1 rounded-lg">{r.hora}</span>
-                          </td>
-                          <td className="py-4 text-center">
-                            <span className={`px-4 py-1 rounded-full text-xs font-black uppercase ${
-                              r.estado === "Completado" ? "bg-emerald-100 text-emerald-600" : 
-                              r.estado === "Pendiente" ? "bg-amber-100 text-amber-600" : "bg-rose-100 text-rose-600"
-                            }`}>
-                              {r.estado}
-                            </span>
-                          </td>
-                          <td className="py-4 text-right">
-                            <button className="text-slate-300 hover:text-indigo-600 transition-colors">
-                              <FaChevronRight />
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+          <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 col-span-2 md:col-span-2">
+            <FaHeartbeat className="text-rose-500 text-2xl mb-4" />
+            <p className="font-black text-sm uppercase tracking-tight text-slate-700">Síntomas</p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {sintomas.length === 0 ? (
+                <p className="text-xs font-bold text-slate-400 italic underline decoration-slate-200">Todo normal</p>
+              ) : (
+                sintomas.map((s, i) => (
+                  <span key={i} className="text-[10px] bg-rose-50 text-rose-600 px-2 py-1 rounded-lg font-black border border-rose-100">
+                    {s}
+                  </span>
+                ))
+              )}
             </div>
+          </div>
+        </div>
 
-            {/* Actividades Section */}
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
-              <h3 className="text-xl font-bold text-slate-800 mb-6">Registro de Actividades</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {actividades.map((a, i) => (
-                  <div key={i} className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-transparent hover:border-indigo-100 hover:bg-white transition-all">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${a.realizada ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-400'}`}>
-                        <FaCheckCircle size={20} />
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-700">{a.nombre}</p>
-                        <p className="text-xs text-slate-400 uppercase font-bold">{a.hora || 'Sin hora'}</p>
-                      </div>
-                    </div>
-                    <span className={`text-[10px] font-black px-3 py-1 rounded-lg uppercase ${a.realizada ? 'bg-emerald-500 text-white' : 'text-slate-400 bg-slate-200'}`}>
-                      {a.realizada ? 'Hecho' : 'Falta'}
+        {/* DETALLE RECORDATORIOS (Si se activa) */}
+        {mostrarRecordatorios && (
+          <div className="bg-white rounded-[2.5rem] shadow-xl p-8 mb-8 border border-indigo-50 animate-fade-in">
+            <h3 className="font-black text-slate-800 mb-6 text-xl">Detalle de Recordatorios</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-slate-400 text-[10px] uppercase tracking-widest text-left">
+                    <th className="pb-4">Actividad</th>
+                    <th className="pb-4">Hora</th>
+                    <th className="pb-4">Estado</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {recordatoriosHoy.map((r, i) => (
+                    <tr key={i} className="hover:bg-slate-50 transition-colors group">
+                      <td className="py-4 font-bold text-slate-700">{r.titulo}</td>
+                      <td className="py-4 font-bold text-indigo-500 text-sm">{r.hora}</td>
+                      <td className="py-4">
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
+                          r.estado === "Completado" ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"
+                        }`}>
+                          {r.estado}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ACTIVIDADES & INFO ADULTO (En dos columnas en Web) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8">
+            <h3 className="font-black text-slate-800 mb-6 flex items-center gap-2">
+              <FaCheckCircle className="text-indigo-500" /> Registro de Actividades
+            </h3>
+            <div className="space-y-4">
+              {actividades.map((a, i) => (
+                <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-slate-100">
+                  <p className="font-bold text-slate-700">{a.nombre}</p>
+                  <div className="flex items-center gap-4">
+                    <span className="text-[10px] font-bold text-slate-400 bg-slate-200 px-2 py-1 rounded-md">
+                      {a.hora || "--:--"}
+                    </span>
+                    <span className={`text-[10px] font-black uppercase ${a.realizada ? "text-emerald-500" : "text-slate-300"}`}>
+                      {a.realizada ? "COMPLETADO" : "PENDIENTE"}
                     </span>
                   </div>
-                ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 p-8 h-fit">
+            <h3 className="font-black text-slate-800 mb-6">Info del Paciente</h3>
+            <div className="space-y-4">
+              <div className="bg-slate-50 p-4 rounded-2xl border-l-4 border-indigo-500">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Nombre Completo</p>
+                <p className="font-bold text-slate-700">{adulto.nombre}</p>
+              </div>
+              <div className="bg-slate-50 p-4 rounded-2xl">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Identificador</p>
+                <p className="font-bold text-slate-700 text-sm"># {adulto.id_adulto}</p>
               </div>
             </div>
-
           </div>
         </div>
-      </main>
-    </div>
-  );
-}
-
-// Componente para las tarjetas pequeñas de estado
-function StatusCard({ icon, title, value, color }) {
-  return (
-    <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-5 transition-transform hover:scale-[1.02]">
-      <div className={`${color} p-4 rounded-2xl`}>{icon}</div>
-      <div>
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-tight">{title}</p>
-        <p className="text-lg font-black text-slate-700">{value}</p>
       </div>
     </div>
   );
