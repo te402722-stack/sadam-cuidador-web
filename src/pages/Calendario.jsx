@@ -107,16 +107,18 @@ useEffect(() => {
   ========================= */
 
   const recordatoriosDelDia = recordatorios.filter((r) => {
-
-    const fecha = new Date(r.fecha);
+    
+    const partes = r.fecha.split("-");
+    const rAnio = parseInt(partes[0]);
+    const rMes = parseInt(partes[1]) - 1; // Meses en JS son 0-11
+    const rDia = parseInt(partes[2]);
 
     return (
-      fecha.getDate() === selectedDay &&
-      fecha.getMonth() === month &&
-      fecha.getFullYear() === year
+      rDia === selectedDay &&
+      rMes === month &&
+      rAnio === year
     );
-
-  });
+});
 
   /* =========================
      DETECTAR ALERTAS
@@ -200,16 +202,18 @@ useEffect(() => {
               if (!day) return <div key={index}></div>;
 
               const recordatoriosDia = recordatorios.filter((r) => {
-
-                const fecha = new Date(r.fecha);
+                const partes = r.fecha.split("-");
+                const rAnio = parseInt(partes[0]);
+                const rMes = parseInt(partes[1]) - 1;
+                const rDia = parseInt(partes[2]);
 
                 return (
-                  fecha.getDate() === day &&
-                  fecha.getMonth() === month &&
-                  fecha.getFullYear() === year
+                  rDia === day &&
+                  rMes === month &&
+                  rAnio === year
                 );
-
               });
+              
 
               return (
 

@@ -212,8 +212,9 @@ const fin = new Date(
   fechaTermino.dia,
   12, 0, 0
 );
-  inicio.setHours(0,0,0,0);
-  fin.setHours(23,59,59,999);
+  // Forzamos el mediodía para que los cálculos de días no se vean afectados por zonas horarias
+  inicio.setHours(12, 0, 0, 0);
+  fin.setHours(12, 0, 0, 0);
 
   // 🔥 SI NO HAY HORAS MÚLTIPLES, USA LA PRINCIPAL
   const listaHoras = horasMultiples.length > 0
@@ -274,7 +275,9 @@ if (intervaloTipo === "cadaXHoras") {
       });
     }
 
+    
     actual.setDate(actual.getDate() + 1);
+  actual.setHours(12, 0, 0, 0);
   }
 
   return recordatorios;
