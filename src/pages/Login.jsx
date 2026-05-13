@@ -130,12 +130,6 @@ function Login({ onLogin }) {
           Crear cuenta
         </button>
 
-        {/* GOOGLE */}
-
-        <button className="w-full flex items-center justify-center gap-3 border py-3 rounded-xl">
-          <FcGoogle size={22}/> Continuar con Google
-        </button>
-
       </div>
 
     </div>

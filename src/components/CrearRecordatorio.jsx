@@ -369,9 +369,9 @@ const fin = new Date(
       }
 
       if (tipo === "agua") {
-        dataFinal.vasos = form.vasos;
-        dataFinal.especificaciones = form.especificaciones;
-      }
+  dataFinal.vasos = parseInt(form.vasos) || 1;
+  dataFinal.especificaciones = form.especificaciones;
+}
 
       if (tipo === "cita") {
         dataFinal.nombre = form.nombre;
@@ -518,6 +518,28 @@ useEffect(() => {
             <input name="especificaciones" placeholder="Especificaciones" onChange={handleChange} style={inputStyle}/>
           </div>
         )}
+
+        {tipo === "agua" && (
+  <div style={cardStyle}>
+    <input
+      name="vasos"
+      type="number"
+      min="1"
+      placeholder="Cantidad de vasos"
+      value={form.vasos}
+      onChange={handleChange}
+      style={inputStyle}
+    />
+
+    <input
+      name="especificaciones"
+      placeholder="Especificaciones"
+      value={form.especificaciones}
+      onChange={handleChange}
+      style={inputStyle}
+    />
+  </div>
+)}
 
         {tipo === "cita" && (
           <div style={cardStyle}>
