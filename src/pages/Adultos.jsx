@@ -12,60 +12,67 @@ function Adultos() {
   const navigate = useNavigate();
 
   const cargarAdultos = async () => {
-  const cuidador = JSON.parse(localStorage.getItem("cuidador"));
-  if (!cuidador) return;
+    const cuidador = JSON.parse(localStorage.getItem("cuidador"));
+    if (!cuidador) return;
 
-  try {
-    const res = await api.get(`/adultos-cuidador/${cuidador.id_cuidador}`);
-    setAdultos(res.data);
-  } catch (err) {
-    console.error(err);
-  }
-};
+    try {
+      const res = await api.get(`/adultos-cuidador/${cuidador.id_cuidador}`);
+      setAdultos(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     cargarAdultos();
   }, []);
 
   // 🔥 VINCULAR ADULTO
-  // 🔥 VINCULAR ADULTO (Versión optimizada para producción)
-const vincularAdulto = async () => {
-  if (!codigo.trim()) {
-    alert("Ingresa un código");
-    return;
-  }
+  const vincularAdulto = async () => {
+    if (!codigo.trim()) {
+      alert("Ingresa un código");
+      return;
+    }
 
-  const cuidador = JSON.parse(localStorage.getItem("cuidador"));
-  if (!cuidador) {
-    alert("Error: No se encontró información del cuidador");
-    return;
-  }
+    const cuidador = JSON.parse(localStorage.getItem("cuidador"));
+    if (!cuidador) {
+      alert("Error: No se encontró información del cuidador");
+      return;
+    }
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    // Usamos 'api' en lugar de 'fetch'. 
-    // Ya no necesitas poner la URL completa ni los headers de JSON, api.js lo hace por ti.
-    const res = await api.post("/vincular", {
-      codigo: codigo,
-      id_cuidador: cuidador.id_cuidador
-    });
+      const res = await api.post("/vincular", {
+        codigo: codigo,
+        id_cuidador: cuidador.id_cuidador
+      });
 
-    // Con axios (nuestro 'api'), la respuesta exitosa llega directamente en res.data
-    alert("Adulto vinculado correctamente");
+      const adulto = res.data.adulto;
 
-    setCodigo("");
-    cargarAdultos(); // 🔥 Recargar lista para ver al nuevo adulto
+      setCodigo("");
 
-  } catch (error) {
-    // Si el servidor responde con un error (ej. código inválido), axios lo atrapa aquí
-    const mensajeError = error.response?.data?.error || "Error al vincular";
-    console.error("Error en vinculación:", error);
-    alert(mensajeError);
-  } finally {
-    setLoading(false);
-  }
-};
+      alert(res.data.mensaje || "Vinculación exitosa");
+
+      // 🔥 AUTO REDIRECCIÓN AL ADULTO
+      if (adulto?.id_adulto) {
+        localStorage.setItem("adultoSeleccionado", JSON.stringify(adulto));
+        navigate(`/dashboard/inicio/${adulto.id_adulto}`);
+      } else {
+        cargarAdultos();
+      }
+
+    } catch (error) {
+      const mensajeError =
+        error.response?.data?.mensaje || "Error al vincular";
+
+      console.error("Error en vinculación:", error);
+      alert(mensajeError);
+
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
 
@@ -84,7 +91,7 @@ const vincularAdulto = async () => {
         </div>
       </div>
 
-      {/* 🔥 NUEVO: VINCULAR ADULTO */}
+      {/* 🔥 VINCULAR ADULTO */}
       <div className="bg-white p-5 rounded-2xl shadow mb-6 border border-gray-100">
 
         <p className="text-sm text-gray-500 mb-2">
@@ -103,7 +110,7 @@ const vincularAdulto = async () => {
 
           <button
             onClick={vincularAdulto}
-            disabled={loading}
+            disabled={loading || !codigo.trim()}
             className="bg-blue-500 text-white px-5 rounded-xl flex items-center gap-2 hover:bg-blue-600 transition"
           >
             <FaPlus />
